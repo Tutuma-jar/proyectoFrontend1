@@ -411,3 +411,34 @@ permitía cerrarlo.
   trece pruebas aprobadas, incluidas las regresiones de FE-005 y FE-003.
 - `node node_modules/typescript/bin/tsc --noEmit --incremental false`: correcto.
 - No se guardaron usuarios ni se realizó validación visual en navegador.
+
+## FE-014 — Distinguir la etiqueta de matrículas reprobadas
+
+### Bug y error original
+
+Las matrículas con estado `reprobada` se mostraban como "Aprobada" en los
+consumidores del mapa compartido, aunque conservaban el tono de peligro.
+La interfaz comunicaba un resultado opuesto al recibido desde la API.
+
+### Dónde se encontraba
+
+- `src/lib/format.ts`, constante `STATUS_LABEL`, línea 25: `reprobada`
+  tenía asignada la misma etiqueta "Aprobada" que `aprobada`.
+- Historial, notas, planilla docente y administración usan ese mapa compartido.
+
+### Dónde y cómo se solucionó
+
+- Se cambió únicamente `STATUS_LABEL.reprobada` a "Reprobada" en
+  `src/lib/format.ts`. Los consumidores reciben la etiqueta correcta sin cambios.
+- Se conservaron los otros tres textos, los tonos y los estados originales;
+  no se modificaron resultados académicos ni datos del backend.
+- Se añadió `tests/enrollment-status-label.test.mjs` como regresión focalizada.
+
+### Validación
+
+- Desde la raíz: `node --test tests/enrollment-status-label.test.mjs`.
+- Las tres pruebas fallaron antes y pasan después. Comprueban los cuatro
+  estados y sus tonos, y renderizan con React el JSX real de los badges de
+  historial y planilla usando el componente `Badge` y los mapas reales.
+- Los badges de los consumidores se prueban en aislamiento, no las pantallas
+  completas. Sin llamadas API, cambios de datos ni validación en navegador.

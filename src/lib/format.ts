@@ -22,7 +22,7 @@ export const date = (iso: string): string =>
 export const STATUS_LABEL: Record<EnrollmentStatus, string> = {
   activa: "En curso",
   aprobada: "Aprobada",
-  reprobada: "Aprobada",
+  reprobada: "Reprobada",
   cancelada: "Cancelada",
 };
 
