@@ -32,7 +32,14 @@ export function NotificationList() {
 
   const load = useCallback(async () => {
     try {
-      setResult(await api<Page>(`/notifications/mine?page=${page}&limit=${LIMIT}${unreadOnly ? "&read=false" : ""}`));
+      const next = await api<Page>(`/notifications/mine?page=${page}&limit=${LIMIT}${unreadOnly ? "&read=false" : ""}`);
+      const lastPage = Math.max(1, next.meta.totalPages);
+      if (page > lastPage) {
+        setResult(null);
+        setPage(lastPage);
+      } else {
+        setResult(next);
+      }
       setError(null);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "No se pudieron cargar las notificaciones");

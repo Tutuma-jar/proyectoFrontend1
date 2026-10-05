@@ -4,6 +4,40 @@ Este documento registra las correcciones realizadas. Para cada nuevo arreglo,
 agregar una entrada con el ID del bug, el error original, su ubicación, la
 solución y su validación. No reemplazar las entradas anteriores.
 
+## FE-019 — Recuperar una página válida al reducirse las notificaciones
+
+### Bug y error original
+
+Con 16 notificaciones sin leer, marcar la única de la página 2 podía mostrar
+que no quedaban notificaciones, aunque todavía había 15 en la página 1.
+La paginación desaparecía y no permitía volver con Anterior.
+
+### Dónde se encontraba
+
+- `src/app/(app)/notificaciones/notification-list.tsx`, callback `load`:
+  aceptaba resultados de la página actual sin compararla con `totalPages`.
+- `markRead` y `markAll` recargaban esa misma página después de reducir el
+  conjunto filtrado; una respuesta vacía fuera de rango activaba el estado vacío.
+
+### Dónde y cómo se solucionó
+
+- `load` calcula la última página válida con `Math.max(1, next.meta.totalPages)`.
+- Si la página solicitada está fuera de rango, limpia el resultado visible y
+  actualiza `page`. El efecto existente vuelve a consultar la página válida
+  manteniendo el filtro y el límite; no se publica el falso estado vacío.
+- Si ya está dentro de rango, publica el resultado normalmente. Un conjunto
+  realmente vacío sigue mostrando el mensaje de ausencia en la página 1.
+
+### Validación
+
+- Desde la raíz: `node --test tests/notification-pagination.test.mjs`.
+- El componente real se ejecuta con hooks, JSX y API simulados. Dos casos
+  fallaban antes del cambio y las tres pruebas pasan después: 16 sin leer →
+  página 2 → marcar una → 15 visibles, una única notificación → vacío real,
+  y marcar todas desde la página 2 → página 1 vacía.
+- Typecheck sin emisión y ESLint del componente y la prueba pasaron.
+- Sin modificar notificaciones reales ni validación visual en navegador.
+
 ## FE-010 — Aceptar coma como separador decimal de notas
 
 ### Bug y error original
