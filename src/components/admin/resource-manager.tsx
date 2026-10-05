@@ -294,7 +294,7 @@ function RecordForm({
 
   // Avisa al contenedor si el formulario tiene cambios respecto al registro original
   useEffect(() => {
-    onDirty(JSON.stringify(values) !== JSON.stringify(row ?? config.initial(null)));
+    onDirty(JSON.stringify(values) !== JSON.stringify(config.initial(row)));
   }, [values, row, config, onDirty]);
   const [dynamic, setDynamic] = useState<Record<string, Opt[]>>({});
   const [error, setError] = useState<string | null>(null);

@@ -346,3 +346,39 @@ volvía a ofrecer Cancelar. Solo una recarga manual obtenía la matrícula cance
 - Desde la raíz: `node --test tests/enrollment-refresh.test.mjs tests/enrollment-cancel.test.mjs`:
   seis pruebas pasan. `git diff --check`: sin errores.
 - No se cancelaron matrículas reales ni se validó el router en un navegador.
+
+## FE-004 — Permitir cerrar la edición de usuarios sin cambios
+
+### Bug y error original
+
+En `/admin/usuarios`, abrir la edición y pulsar Cancelar o la X sin modificar
+campos no cerraba el modal. Editar y restaurar los valores originales tampoco
+permitía cerrarlo.
+
+### Dónde se encontraba
+
+- `src/components/admin/resource-manager.tsx`, componente `RecordForm`, efecto
+  que notifica `onDirty`: comparaba `values`, normalizado por `config.initial`,
+  con el documento crudo `row` de la API. Sus campos y representaciones difieren.
+- La configuración de usuarios incluye una contraseña vacía y omite `_id`;
+  la diferencia marcaba cambios inexistentes y activaba `keepOpenIfDirty` en
+  `ResourceManager.closeForm`, compartido por Cancelar y la X del modal.
+
+### Dónde y cómo se solucionó
+
+- En el efecto de `RecordForm` se compara ahora `values` con
+  `config.initial(row)`, usando la misma representación en ambos lados.
+- Abrir sin editar o restaurar los valores originales produce `dirty=false`.
+  Los cambios reales siguen bloqueando el cierre en los recursos configurados
+  para ello. No se modificaron la configuración de usuarios ni el modal.
+
+### Validación
+
+- `tests/resource-form-dirty.test.mjs` ejecuta el efecto, `closeForm` y el
+  inicializador de usuarios reales con estado simulado. Tres casos fallaron
+  antes del arreglo; las cinco pruebas pasan después, incluyendo edición real,
+  restauración de texto y checkbox, apertura sin cambios y creación.
+- Desde la raíz: `node --test tests/resource-form-dirty.test.mjs tests/resource-form-validation.test.mjs tests/resource-pagination.test.mjs`:
+  trece pruebas aprobadas, incluidas las regresiones de FE-005 y FE-003.
+- `node node_modules/typescript/bin/tsc --noEmit --incremental false`: correcto.
+- No se guardaron usuarios ni se realizó validación visual en navegador.
