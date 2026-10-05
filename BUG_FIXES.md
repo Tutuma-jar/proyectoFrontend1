@@ -105,3 +105,39 @@ El backend conservaba sus controles; el fallo estaba en la redirección frontend
 - Antes del arreglo falló la redirección de una subruta ajena; después pasaron
   las tres pruebas de redirecciones, rutas permitidas y comportamiento de sesión.
 - `git diff --check` sin errores. Sin validación visual ni llamadas al backend.
+
+## FE-005 — Validar límites numéricos antes de guardar recursos
+
+### Bug y error original
+
+El formulario administrativo permitía enviar créditos de programa iguales a 0
+o negativos y valores que superaban los máximos configurados, como créditos de
+materia mayores que 10. El error se descubría recién en la API.
+
+### Dónde se encontraba
+
+- `src/components/admin/resource-manager.tsx`, componente `RecordForm`, función
+  `submit`: el formulario usaba `noValidate` y enviaba el cuerpo sin comprobar
+  la validez nativa. El botón solo comprobaba campos vacíos mediante `missing`.
+- Los límites ya estaban definidos en `src/components/admin/configs.tsx` y
+  transmitidos al input por `src/components/ui/field.tsx`; no requerían cambios.
+
+### Dónde y cómo se solucionó
+
+- En `RecordForm.submit` se tipa el evento como `FormEvent<HTMLFormElement>` y
+  se retorna antes de construir el cuerpo o llamar a la API si hay campos
+  faltantes o `event.currentTarget.reportValidity()` devuelve `false`.
+- La validación nativa comprueba los atributos `min`, `max` y la validez del
+  input, mostrando su mensaje. La protección aplica a creación y edición,
+  también cuando el envío llega por teclado, sin depender solo del botón.
+
+### Validación
+
+- `node --test tests/resource-form-validation.test.mjs`: cinco pruebas que
+  ejecutan la función real con validez nativa y API simuladas. Fallaban antes
+  del cambio y pasan después; cubren bloqueo de POST/PATCH inválidos, campos
+  faltantes y continuación de creación/edición válidas.
+- `node node_modules/typescript/bin/tsc --noEmit --incremental false`: correcto.
+- `git diff --check`: sin errores.
+- Comandos desde la raíz de `proyectoFrontend1`. No se enviaron datos reales
+  ni se comprobó la interfaz en un navegador.

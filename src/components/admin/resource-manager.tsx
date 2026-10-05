@@ -330,8 +330,9 @@ function RecordForm({
     return f.type === "schedule" ? !Array.isArray(v) || v.length === 0 || (v as Slot[]).some((x) => !x.startTime || !x.endTime || !x.classroom) : v === "" || v === undefined;
   });
 
-  async function submit(event: FormEvent) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (missing || !event.currentTarget.reportValidity()) return;
     setSaving(true);
     setError(null);
     try {
