@@ -778,3 +778,36 @@ incluso cuando no existía un periodo abierto.
   simulados; se comprueban el total mostrado y ambos filtros enviados.
 - `& './node_modules/.bin/eslint.cmd' 'src/app/(app)/estudiante/page.tsx' --no-fix --no-cache`: correcto.
 - Sin creación de matrículas ni llamadas al backend; sin validación en navegador.
+
+## FE-028 — Consultar los conteos de matrículas por su clave de estado
+
+### Bug y error original
+
+El resumen del periodo abierto mostraba cero para todos los estados aunque
+el dashboard devolviera conteos positivos de matrículas.
+
+### Dónde se encontraba
+
+- `src/app/(app)/admin/page.tsx`, función `AdminHome`: al recorrer
+  `STATUS_LABEL` consultaba `p.enrollmentsByStatus[label]`, con etiquetas como
+  Activas, en lugar de las claves contractuales como `activa`.
+- `BackendProyecto1/src/reports/reports.service.ts` construye el registro por
+  los valores originales de status; el fallback a cero ocultaba la discrepancia.
+
+### Dónde y cómo se solucionó
+
+- Se usa `p.enrollmentsByStatus[key] ?? 0` para obtener cada conteo.
+- `label` se conserva como texto visible y cero queda reservado para estados
+  ausentes. No se cambian las etiquetas, la API ni otros indicadores del panel.
+
+### Validación
+
+- `tests/admin-enrollment-status-counts.test.mjs` renderiza AdminHome, StatCard
+  y Card reales con React y un dashboard simulado con periodo abierto.
+- Comprueba los cuatro valores 12, 7, 3 y 2, la ausencia individual de cada
+  estado y un registro vacío. Solo los estados ausentes muestran cero.
+- Antes del cambio fallaban cinco casos y pasaba el registro vacío.
+- Desde la raíz: `node --test tests/admin-enrollment-status-counts.test.mjs tests/admin-active-teachers.test.mjs`.
+  Pasan nueve pruebas, incluidas las tres regresiones de FE-027.
+- `git diff --check`: sin errores.
+- Sin peticiones reales, cambios de datos ni validación en navegador.

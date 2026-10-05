@@ -55,7 +55,7 @@ export default async function AdminHome() {
             {Object.entries(STATUS_LABEL).map(([key, label]) => (
               <li key={key}>
                 <p className="text-sm text-muted">{label}</p>
-                <p className="text-xl font-extrabold">{p.enrollmentsByStatus[label] ?? 0}</p>
+                <p className="text-xl font-extrabold">{p.enrollmentsByStatus[key] ?? 0}</p>
               </li>
             ))}
           </ul>
