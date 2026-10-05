@@ -577,3 +577,33 @@ su ID en el cuerpo enviado. El usuario no podía quitar la casilla invisible.
   dieciocho pruebas aprobadas, incluidas las regresiones del formulario.
 - `node node_modules/typescript/bin/tsc --noEmit --incremental false`: correcto.
 - No se crearon materias ni se realizó validación visual en navegador.
+
+## FE-007 — Corregir el porcentaje faltante del plan de evaluación
+
+### Bug y error original
+
+Un plan que sumaba 60% mostraba Te pasaste 40%, mientras uno que sumaba 120%
+mostraba Faltan 20%. El indicador describía la acción contraria a la necesaria.
+
+### Dónde se encontraba
+
+- `src/app/(app)/docente/grupos/[id]/evaluations-panel.tsx`, `EvaluationsPanel`:
+  `remaining` se calculaba como `total - 100`, pero el mensaje interpretaba un
+  valor positivo como porcentaje faltante y uno negativo como exceso.
+
+### Dónde y cómo se solucionó
+
+- Se cambió únicamente el cálculo a `100 - total`, consistente con las ramas
+  existentes del mensaje. Se conserva la suma de pesos, la barra de progreso
+  y la indicación especial de plan completo cuando el total es 100%.
+
+### Validación
+
+- `tests/evaluation-plan-total.test.mjs` renderiza el componente real con React,
+  estado sintético y efectos desactivados, sin peticiones ni escrituras.
+- Comprueba totales 0, 60, 100 y 120 tanto en modo editable como de solo lectura:
+  Faltan 100%, Faltan 40%, El plan está completo y Te pasaste 20%, respectivamente.
+- Desde la raíz: `node --test tests/evaluation-plan-total.test.mjs`.
+  Antes fallaban seis casos y pasaban los dos de 100%; después pasan los ocho.
+- `git diff --check`: sin errores.
+- No se crearon evaluaciones reales ni se comprobó la interfaz en un navegador.
