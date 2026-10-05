@@ -74,3 +74,34 @@ y sustituía el mensaje de autenticación por `Sesion vencida`.
 - ESLint de los archivos tocados y `git diff --check` pasaron.
 - Respuestas HTTP simuladas; sin intentos contra cuentas reales ni validación
   visual en navegador.
+
+## FE-029 — Validar el rol también en las subrutas
+
+### Bug y error original
+
+Un usuario era redirigido al abrir la raíz de un área ajena a su rol, pero
+podía acceder a sus subpáginas, por ejemplo un estudiante a `/admin/usuarios`.
+El backend conservaba sus controles; el fallo estaba en la redirección frontend.
+
+### Dónde se encontraba
+
+- `src/proxy.ts`, función `proxy`, línea 20: la búsqueda de área solo comprobaba
+  `pathname === p`, por lo que los descendientes no activaban el control de rol.
+
+### Dónde y cómo se solucionó
+
+- En `src/proxy.ts` la búsqueda comprueba la raíz exacta o
+  `pathname.startsWith(`${p}/`)`, incluyendo subrutas con límite de segmento.
+- Las áreas ajenas redirigen a `HOME[session.role]`; rutas como `/administrativo`
+  no se confunden con `/admin`. No se modificaron los permisos del backend.
+- Se conservan el acceso al área propia y páginas comunes, la exigencia de sesión
+  y los comportamientos de login y `?expired=1`.
+
+### Validación
+
+- `tests/proxy-role.test.mjs` ejecuta el proxy real transpilado y la decodificación
+  real de sesión, con `NextRequest` y cookies de prueba para los tres roles.
+- Comando desde la raíz: `node --test tests/proxy-role.test.mjs`.
+- Antes del arreglo falló la redirección de una subruta ajena; después pasaron
+  las tres pruebas de redirecciones, rutas permitidas y comportamiento de sesión.
+- `git diff --check` sin errores. Sin validación visual ni llamadas al backend.
