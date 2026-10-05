@@ -711,3 +711,34 @@ y el usuario no disponía de desplazamiento horizontal para llegar a ellos.
 - `node node_modules/typescript/bin/tsc --noEmit --incremental false`: correcto.
 - Prueba visual/layout aislada, sin levantar la aplicación, llamar al backend
   ni modificar registros reales. No se comprobó la página completa autenticada.
+
+## FE-027 — Mostrar el contador correcto de docentes activos
+
+### Bug y error original
+
+La tarjeta Docentes activos repetía el número de estudiantes activos. Con
+120 estudiantes y 8 docentes, ambas tarjetas mostraban 120.
+
+### Dónde se encontraba
+
+- `src/app/(app)/admin/page.tsx`, función `AdminHome`: la tarjeta de docentes
+  recibía `d.active.students`, igual que la tarjeta de estudiantes.
+- `Dashboard.active` en `src/lib/types.ts` ya declara `teachers` y `students`
+  como contadores independientes; no faltaba información en el contrato.
+
+### Dónde y cómo se solucionó
+
+- La tarjeta Docentes activos recibe ahora `d.active.teachers`.
+- No se modifican el contador de estudiantes, los demás indicadores, la
+  consulta del dashboard ni el contrato de la API.
+
+### Validación
+
+- `tests/admin-active-teachers.test.mjs` renderiza AdminHome, StatCard y Card
+  reales con React y una respuesta de dashboard simulada.
+- Comprueba estudiantes/docentes con valores 120/8, 120/0 y 0/8, y verifica
+  que los indicadores de estudiantes, programas y facultades se conservan.
+- Desde la raíz: `node --test tests/admin-active-teachers.test.mjs`.
+  Las tres pruebas fallaron antes del cambio y pasaron después.
+- `git diff --check`: sin errores.
+- Sin peticiones reales, cambios de datos ni validación en navegador.

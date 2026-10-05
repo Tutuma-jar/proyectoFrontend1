@@ -20,7 +20,7 @@ export default async function AdminHome() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard icon={GraduationCap} label="Estudiantes activos" value={d.active.students} />
-        <StatCard icon={Users} label="Docentes activos" value={d.active.students} />
+        <StatCard icon={Users} label="Docentes activos" value={d.active.teachers} />
         <StatCard icon={Layers} label="Programas" value={d.active.programs} hint={`${d.active.subjects} materias activas`} />
         <StatCard icon={Building2} label="Facultades" value={d.faculties} hint={`${d.active.classrooms} salones activos`} />
       </div>
