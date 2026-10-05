@@ -333,7 +333,7 @@ const enrollments: ResourceConfig = {
     { name: "group", label: "Grupo", type: "select", lookup: "openGroup", required: true, hint: "Solo grupos activos con cupo. El backend valida prerrequisitos, cruces de horario y el límite de créditos." },
   ],
   initial: () => ({ student: "", group: "" }),
-  toBody: (v) => ({ student: text(v.student), group: text(v.group) }),
+  toBody: (v) => ({ student: text(v.student), groupId: text(v.group) }),
   rowActions: (r, reload) =>
     r.status === "activa" && r.period?.status === "abierto" ? (
       <ConfirmAction

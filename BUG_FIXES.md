@@ -141,3 +141,36 @@ materia mayores que 10. El error se descubría recién en la API.
 - `git diff --check`: sin errores.
 - Comandos desde la raíz de `proyectoFrontend1`. No se enviaron datos reales
   ni se comprobó la interfaz en un navegador.
+
+## FE-021 — Enviar groupId al crear matrículas
+
+### Bug y error original
+
+La matrícula de estudiante y la creación administrativa enviaban `group` y
+omitían `groupId`, obligatorio en `CreateEnrollmentDto`. El backend rechaza
+campos no declarados, por lo que ambos cuerpos incumplían el contrato.
+
+### Dónde se encontraba
+
+- `src/app/(app)/estudiante/matricula/enroll-view.tsx`, función `enroll`:
+  el POST a `/enrollments` enviaba `{ group: g.group }`.
+- `src/components/admin/operations.tsx`, configuración `enrollments.toBody`:
+  construía `{ student: text(v.student), group: text(v.group) }`.
+
+### Dónde y cómo se solucionó
+
+- En `enroll` se envía ahora `{ groupId: g.group }`.
+- En `enrollments.toBody` se envía
+  `{ student: text(v.student), groupId: text(v.group) }`.
+- Se mantienen los campos locales del formulario, los IDs completos y el
+  estudiante del flujo administrativo. No se modifica el backend.
+
+### Validación
+
+- `tests/enrollment-payload.test.mjs` ejecuta la función `enroll`, el mapeo
+  administrativo y el cliente API reales con respuestas HTTP simuladas.
+- Comando desde la raíz: `node --test tests/enrollment-payload.test.mjs`.
+- Las dos pruebas fallaron antes del arreglo y pasaron después. Comprueban
+  POST `/api/enrollments`, los IDs completos y la ausencia de `group`.
+- `git diff --check` pasó sin errores.
+- No se realizaron matrículas reales ni pruebas integradas contra el backend.
