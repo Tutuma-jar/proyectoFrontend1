@@ -442,3 +442,37 @@ La interfaz comunicaba un resultado opuesto al recibido desde la API.
   historial y planilla usando el componente `Badge` y los mapas reales.
 - Los badges de los consumidores se prueban en aislamiento, no las pantallas
   completas. Sin llamadas API, cambios de datos ni validación en navegador.
+
+## FE-011 — Mostrar las clases del sábado en su tarjeta
+
+### Bug y error original
+
+Las clases con `day: "sabado"` aparecían dentro de Viernes, mientras Sábado
+mostraba Sin clases. Afectaba a los horarios de estudiante y docente.
+
+### Dónde se encontraba
+
+- `src/components/week-schedule.tsx`, componente `WeekSchedule`:
+  `Math.min(DAYS.indexOf(d), 4)` reducía el índice de sábado (5) al de viernes
+  (4), mezclando sus franjas. Ninguna franja podía llegar a la tarjeta de sábado.
+- Las páginas `src/app/(app)/estudiante/horario/page.tsx` y
+  `src/app/(app)/docente/horario/page.tsx` comparten este componente.
+
+### Dónde y cómo se solucionó
+
+- Cada tarjeta obtiene ahora `byDay[day] ?? []`, sin agrupar por un índice
+  limitado a viernes. Se elimina el índice innecesario del callback y el
+  comentario incorrecto sobre el final de la semana académica.
+- Se conservan las seis tarjetas y Sin clases para los días sin franjas.
+  No se modifican las páginas consumidoras ni los datos o etiquetas de formato.
+
+### Validación
+
+- `tests/week-schedule-days.test.mjs` renderiza el componente y ambas páginas
+  reales con React y respuestas de horario simuladas.
+- Comprueba viernes y sábado separados, sin duplicaciones ni pérdidas, un
+  horario exclusivo de sábado con viernes vacío, y ambas pantallas consumidoras.
+- Desde la raíz: `node --test tests/week-schedule-days.test.mjs`.
+  Las cuatro pruebas fallaron antes del cambio y pasaron después.
+- `git diff --check`: sin errores.
+- No se crearon grupos ni se comprobó la interfaz en un navegador.
