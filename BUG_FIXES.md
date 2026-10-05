@@ -742,3 +742,39 @@ La tarjeta Docentes activos repetía el número de estudiantes activos. Con
   Las tres pruebas fallaron antes del cambio y pasaron después.
 - `git diff --check`: sin errores.
 - Sin peticiones reales, cambios de datos ni validación en navegador.
+
+## FE-026 — Contar solo las matrículas activas del periodo actual
+
+### Bug y error original
+
+El inicio del estudiante mostraba el total histórico de matrículas como
+"Matrículas activas este periodo". Contaba estados no activos y otros periodos,
+incluso cuando no existía un periodo abierto.
+
+### Dónde se encontraba
+
+- `src/app/(app)/estudiante/page.tsx`, función `StudentHome`: consultaba
+  `/enrollments/mine?limit=1` sin filtros y mostraba `meta.total` como actividad
+  del periodo. El periodo obtenido en paralelo no se usaba para esa consulta.
+
+### Dónde y cómo se solucionó
+
+- La consulta de matrículas espera al resultado de `/periods/current` y envía
+  `status=activa`, `period=<ID actual>` y `limit=1`.
+- Se reutiliza una sola promesa de periodo; usuario y notificaciones siguen
+  cargándose en paralelo. Sin periodo abierto no se consultan matrículas y
+  el indicador muestra cero, conservando el mensaje de ausencia de periodo.
+- Se conserva el fallback a cero si la consulta de matrículas no devuelve datos.
+- Se añadió `tests/student-home-enrollments.test.mjs` como regresión focalizada.
+
+### Validación
+
+- Desde la raíz: `node --test tests/student-home-enrollments.test.mjs`.
+- Las cinco pruebas fallaban antes y pasan después. Cubren dos matrículas
+  activas actuales frente a seis históricas/no activas, ausencia de periodo,
+  cero matrículas activas, fallo de consulta y espera del periodo manteniendo
+  el inicio paralelo de las solicitudes independientes.
+- Se renderizan `StudentHome` y `StatCard` reales con API y contenedor Card
+  simulados; se comprueban el total mostrado y ambos filtros enviados.
+- `& './node_modules/.bin/eslint.cmd' 'src/app/(app)/estudiante/page.tsx' --no-fix --no-cache`: correcto.
+- Sin creación de matrículas ni llamadas al backend; sin validación en navegador.

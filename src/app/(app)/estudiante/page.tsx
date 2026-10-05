@@ -10,10 +10,13 @@ export const metadata: Metadata = { title: "Inicio" };
 const fmt = (iso: string) => new Date(iso).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 
 export default async function StudentHome() {
+  const periodPromise = apiGetOrNull<Period>("/periods/current");
   const [me, period, active, notifications] = await Promise.all([
     apiGet<Me>("/users/me"),
-    apiGetOrNull<Period>("/periods/current"),
-    apiGetOrNull<Paginated<unknown>>("/enrollments/mine?limit=1"),
+    periodPromise,
+    periodPromise.then((period) => period
+      ? apiGetOrNull<Paginated<unknown>>(`/enrollments/mine?status=activa&period=${period._id}&limit=1`)
+      : null),
     apiGetOrNull<Paginated<Notification> & { unread: number }>("/notifications/mine?limit=1"),
   ]);
 
