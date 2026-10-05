@@ -4,6 +4,35 @@ Este documento registra las correcciones realizadas. Para cada nuevo arreglo,
 agregar una entrada con el ID del bug, el error original, su ubicación, la
 solución y su validación. No reemplazar las entradas anteriores.
 
+## FE-010 — Aceptar coma como separador decimal de notas
+
+### Bug y error original
+
+La planilla rechazaba `3,5` aunque el parser documentaba que aceptaba coma o
+punto. La nota se marcaba inválida y se bloqueaba su guardado.
+
+### Dónde se encontraba
+
+- `src/app/(app)/docente/grupos/[id]/grade-sheet-panel.tsx`, función `parse`:
+  se aplicaba `trim` sin normalizar la coma antes de la expresión regular y
+  de la conversión con `Number`.
+
+### Dónde y cómo se solucionó
+
+- `parse` normaliza una coma a punto antes de validar y convertir.
+- Se mantiene el rango 0–5, el máximo de dos decimales y el rechazo de
+  separadores múltiples o mezclados. El cuerpo de guardado utiliza un número.
+
+### Validación
+
+- `tests/grade-sheet-decimal.test.mjs` ejecuta el parser, el cálculo de cambios
+  y la función de guardado reales con datos y API simulados.
+- Desde la raíz: `node --test tests/grade-sheet-decimal.test.mjs tests/grade-sheet-empty.test.mjs tests/grade-sheet-save.test.mjs`.
+- Tres casos de FE-010 fallaban antes del cambio; después pasan sus cuatro
+  pruebas y las doce regresiones locales de FE-008 y FE-017.
+- ESLint del componente y la prueba pasó.
+- No se escribieron notas reales ni se realizó validación visual en navegador.
+
 ## FE-018 — Revalidar las condiciones al confirmar la finalización
 
 ### Bug y error original
