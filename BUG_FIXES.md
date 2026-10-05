@@ -643,3 +643,36 @@ En `/cuenta`, editar el nombre con un valor distinto y no vacío nunca habilitab
 - `& './node_modules/.bin/eslint.cmd' 'src/app/(app)/cuenta/account-forms.tsx' --no-fix --no-cache`: correcto.
 - `& './node_modules/.bin/tsc.cmd' --noEmit --incremental false --pretty false`: correcto.
 - Sin cambios de perfiles reales ni validación visual en navegador.
+
+## FE-009 — Permitir desplazamiento horizontal en listados administrativos
+
+### Bug y error original
+
+En pantallas estrechas, los listados administrativos recortaban las columnas
+derechas y los botones de acciones. La tabla tenía un ancho mínimo de 40rem
+y el usuario no disponía de desplazamiento horizontal para llegar a ellos.
+
+### Dónde se encontraba
+
+- `src/components/admin/resource-manager.tsx`, tabla de `ResourceManager`:
+  un `Card` con `overflow-hidden` contenía un `div` sin scroll, envolviendo
+  la tabla `min-w-[40rem]`. El excedente se recortaba dentro del Card.
+- La columna Acciones, situada a la derecha, quedaba fuera del área visible.
+
+### Dónde y cómo se solucionó
+
+- Se agregó `className="overflow-x-auto"` al `div` que envuelve la tabla.
+- La tabla puede desplazarse horizontalmente dentro del Card sin ensanchar
+  la página. Se conserva `overflow-hidden` en el Card y su estilo existente.
+
+### Validación
+
+- Desde la raíz: `node --test tests/resource-table-scroll.test.mjs`.
+- Las tres pruebas fallaban antes del cambio y pasan después en Chromium
+  instalado, con viewports de 375, 768 y 1280px.
+- Se renderiza el JSX real de la tabla y el Card con datos sintéticos y las
+  utilidades CSS generadas por Tailwind. Se comprueba scroll interno, ausencia
+  de overflow de página y acceso/clic a Operar y Editar al desplazarse.
+- `node node_modules/typescript/bin/tsc --noEmit --incremental false`: correcto.
+- Prueba visual/layout aislada, sin levantar la aplicación, llamar al backend
+  ni modificar registros reales. No se comprobó la página completa autenticada.

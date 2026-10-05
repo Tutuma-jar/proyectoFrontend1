@@ -184,7 +184,7 @@ export function ResourceManager({ config }: { config: ResourceConfig }) {
           <EmptyState title={config.empty} text="Prueba cambiando los filtros o crea un registro nuevo." />
         ) : (
           <Card className="overflow-hidden p-0">
-            <div>
+            <div className="overflow-x-auto">
               <table className="w-full min-w-[40rem] text-sm">
                 <thead>
                   <tr className="border-b border-line text-left text-xs text-muted">
