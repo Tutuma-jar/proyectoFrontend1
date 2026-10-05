@@ -951,3 +951,38 @@ mostraban 3.00 en vez de 1.80 cuando aún no había nota final publicada.
   todas pendientes, solo cero registrado y nota final publicada.
 - `git diff --check` sin errores. Sin modificar notas reales ni finalizar
   matrículas; sin validación visual en navegador ni integración con el backend.
+
+## FE-024 — Aplicar el periodo seleccionado al listado de grupos
+
+### Bug y error original
+
+Al entrar a `/docente/grupos` sin query, el selector mostraba el periodo abierto
+pero el listado consultaba todos los periodos y podía incluir grupos históricos.
+
+### Dónde se encontraba
+
+- `src/app/(app)/docente/grupos/page.tsx`, función `MyGroupsPage`, línea 21:
+  la consulta añadía `period` solo si `requested` era un string, aunque `selected`
+  ya contenía el periodo abierto por defecto.
+
+### Dónde y cómo se solucionó
+
+- La condición del filtro usa ahora `selected && selected !== "todos"`.
+  Selector y consulta comparten el mismo periodo efectivo, también por defecto.
+- Se omite el filtro para "Todos", selección vacía o ausencia de periodo abierto.
+  Una selección explícita se conserva; una query de tipo array mantiene el fallback
+  existente al periodo abierto. No se cambió el selector ni el backend.
+- Se añadió `tests/teacher-groups-period.test.mjs` como regresión focalizada.
+- El cambio de capacidad/matriculados de FE-025 se conserva fuera de este fix.
+
+### Validación
+
+- Desde la raíz: `node --test tests/teacher-groups-period.test.mjs`.
+- Antes fallaban tres casos; después pasan las seis pruebas: periodo por defecto,
+  Todos, periodo histórico explícito, ausencia de periodo abierto, selección vacía
+  y query de tipo array.
+- Se renderizan la página y `PeriodSelect` reales con React, API y navegación
+  simuladas. Se comprueban el filtro enviado, la opción seleccionada y los grupos.
+- ESLint acotado se intentó con límites de 30 y 60 segundos; ambos expiraron sin
+  resultado. `git diff --check` pasó sin errores.
+- Sin llamadas reales, cambios de datos ni validación visual en navegador.

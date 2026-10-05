@@ -18,7 +18,7 @@ export default async function MyGroupsPage({ searchParams }: PageProps<"/docente
 
   // Por defecto el periodo abierto; "todos" lista todos los periodos
   const selected = typeof requested === "string" ? requested : (current?._id ?? "");
-  const groups = await apiGet<Paginated<TeacherGroup>>(`/groups/mine?limit=100${typeof requested === "string" && selected !== "todos" ? `&period=${selected}` : ""}`);
+  const groups = await apiGet<Paginated<TeacherGroup>>(`/groups/mine?limit=100${selected && selected !== "todos" ? `&period=${selected}` : ""}`);
 
   return (
     <>
