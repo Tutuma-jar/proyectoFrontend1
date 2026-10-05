@@ -607,3 +607,39 @@ mostraba Faltan 20%. El indicador describía la acción contraria a la necesaria
   Antes fallaban seis casos y pasaban los dos de 100%; después pasan los ocho.
 - `git diff --check`: sin errores.
 - No se crearon evaluaciones reales ni se comprobó la interfaz en un navegador.
+
+## FE-002 — Habilitar el guardado de un nombre modificado
+
+### Bug y error original
+
+En `/cuenta`, editar el nombre con un valor distinto y no vacío nunca habilitaba
+"Guardar nombre", impidiendo actualizarlo mediante el botón del formulario.
+
+### Dónde se encontraba
+
+- `src/app/(app)/cuenta/account-forms.tsx`, componente `AccountForms`, línea 19:
+  `dirty` se inicializaba a `false` y nunca se actualizaba.
+- La condición `disabled` del botón incluía `!dirty`; `onChange` solo cambiaba
+  `newName`, por lo que el botón permanecía deshabilitado.
+
+### Dónde y cómo se solucionó
+
+- En `AccountForms`, `dirty` se deriva de `newName.trim() !== name.trim()` en
+  lugar de almacenarse en un estado independiente que no se sincronizaba.
+- El botón se deshabilita si no hay cambio o el nombre está vacío; su prop
+  `loading={savingName}` conserva el bloqueo durante el guardado.
+- Se mantienen PATCH `/users/me`, el envío del nombre recortado, la notificación
+  de éxito/error y `router.refresh()`. No se modificó el formulario de contraseña.
+- Se añadió `tests/account-name.test.mjs` como regresión focalizada.
+
+### Validación
+
+- Desde la raíz: `node --test tests/account-name.test.mjs`. Las cuatro pruebas
+  fallaban antes y pasan después: edición/vaciado/restauración, espacios,
+  guardado correcto y reintento tras error.
+- Se ejecutan el componente, el cliente API y el botón reales con estado,
+  router y HTTP simulados. Se verifica PATCH `/api/users/me`, el cuerpo recortado,
+  el atributo HTML `disabled` durante la espera y la actualización simulada del nombre.
+- `& './node_modules/.bin/eslint.cmd' 'src/app/(app)/cuenta/account-forms.tsx' --no-fix --no-cache`: correcto.
+- `& './node_modules/.bin/tsc.cmd' --noEmit --incremental false --pretty false`: correcto.
+- Sin cambios de perfiles reales ni validación visual en navegador.
