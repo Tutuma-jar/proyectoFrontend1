@@ -209,3 +209,37 @@ El proxy conserva el método, por lo que la petición no encontraba la operació
   seis pruebas pasan, incluida la regresión de creación de matrículas FE-021.
 - `git diff --check`: sin errores.
 - No se cancelaron matrículas reales ni se probó contra un backend en ejecución.
+
+## FE-003 — Conservar filtros al paginar listados administrativos
+
+### Bug y error original
+
+Al pasar a la segunda página de un listado filtrado, los filtros permanecían
+visibles pero desaparecían de la solicitud. Aparecían registros ajenos a la
+selección y el total dejaba de corresponder al conjunto filtrado.
+
+### Dónde se encontraba
+
+- `src/components/admin/resource-manager.tsx`, componente `ResourceManager`,
+  callback `load`: `if (page === 1)` condicionaba la incorporación de todos
+  los filtros a los parámetros de la solicitud.
+- Por ejemplo, los filtros `role` y `active` de usuarios estaban definidos en
+  `src/components/admin/configs.tsx`, pero no se enviaban desde la página 2.
+
+### Dónde y cómo se solucionó
+
+- En `ResourceManager.load` se eliminó exclusivamente la condición de página.
+  Los filtros no vacíos se agregan ahora a todas las solicitudes paginadas.
+- Se mantienen la búsqueda, el límite de 15 registros, la omisión de filtros
+  vacíos y el reinicio existente a la página 1 cuando se cambia un filtro.
+
+### Validación
+
+- `node --test tests/resource-pagination.test.mjs tests/resource-form-validation.test.mjs`:
+  ocho pruebas aprobadas, incluidas las cinco regresiones de FE-005.
+- Dos casos nuevos fallaban antes del cambio. Las tres pruebas de FE-003
+  comprueban navegación 1 → 2 → 1 con 17 coincidencias y total estable,
+  ausencia de filtros y conservación/codificación de filtros de texto.
+- `node node_modules/typescript/bin/tsc --noEmit --incremental false`: correcto.
+- Comandos desde la raíz de `proyectoFrontend1`, con API simulada y sin
+  escrituras reales. No se realizó validación visual en navegador.

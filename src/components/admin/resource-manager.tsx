@@ -112,7 +112,7 @@ export function ResourceManager({ config }: { config: ResourceConfig }) {
   const load = useCallback(async () => {
     const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
     if (config.search && query) params.set(config.search.param, query);
-    if (page === 1) Object.entries(filters).forEach(([k, v]) => v && params.set(k, v));
+    Object.entries(filters).forEach(([k, v]) => v && params.set(k, v));
     try {
       setData(await api<Paginated<any>>(`${config.endpoint}?${params}`));
       setError(null);
