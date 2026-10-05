@@ -308,3 +308,41 @@ con ese valor sí se mostraba con color de éxito.
 - `node --test tests/student-grade-passing.test.mjs tests/student-grade-accumulated.test.mjs`:
   pasan doce pruebas, incluidas las siete de FE-012 que sigue pendiente de commit.
 - Sin escrituras reales ni validación visual en navegador.
+
+## FE-023 — Actualizar Mis materias después de cancelar
+
+### Bug y error original
+
+Después de una cancelación exitosa, la tarjeta conservaba el estado activo y
+volvía a ofrecer Cancelar. Solo una recarga manual obtenía la matrícula cancelada.
+
+### Dónde se encontraba
+
+- `src/app/(app)/estudiante/materias/cancel-button.tsx`, función `cancel`:
+  tras el éxito cerraba la confirmación y limpiaba loading, sin actualizar datos.
+- `src/app/(app)/estudiante/materias/page.tsx`, `MyEnrollmentsPage`:
+  el estado y la presencia de CancelButton dependen de la consulta server-side;
+  sus props permanecían iguales al terminar la cancelación.
+
+### Dónde y cómo se solucionó
+
+- CancelButton obtiene el router con `useRouter` de `next/navigation` y ejecuta
+  `router.refresh()` únicamente después de que la API confirme el éxito.
+- La página vuelve a consultar las matrículas. Ya muestra el estado Cancelada
+  y omite CancelButton cuando la matrícula no está activa; no necesitó cambios.
+- `apiGet` usa `cache: "no-store"`, por lo que la consulta obtiene datos nuevos.
+- Ante un error no se refresca la página y se conserva la confirmación con su
+  mensaje. La petición sigue usando POST conforme a FE-022.
+
+### Validación
+
+- `tests/enrollment-refresh.test.mjs` ejecuta CancelButton y la página reales
+  con hooks, router y HTTP simulados, y renderiza la página con React.
+- Antes del cambio falla el caso exitoso por no refrescar. Después, un 200
+  provoca una nueva consulta y muestra Cancelada sin Cancelar; un 403 conserva
+  la tarjeta activa, su acción y el mensaje, sin consulta adicional.
+- Se adaptó el mock de router en `tests/enrollment-cancel.test.mjs`, sin cambiar
+  las aserciones de FE-022.
+- Desde la raíz: `node --test tests/enrollment-refresh.test.mjs tests/enrollment-cancel.test.mjs`:
+  seis pruebas pasan. `git diff --check`: sin errores.
+- No se cancelaron matrículas reales ni se validó el router en un navegador.

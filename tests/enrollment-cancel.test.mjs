@@ -63,6 +63,7 @@ for (const status of [200, 403]) {
     let error;
     const { run } = evaluate(`${cancel.getText(studentSource)}\nexports.run = cancel;`, {
       ...client, id,
+      router: { refresh: () => {} },
       setConfirming: (value) => { confirming = value; },
       setLoading: (value) => { loading = value; },
       setError: (value) => { error = value; },
