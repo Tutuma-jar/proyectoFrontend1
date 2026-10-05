@@ -986,3 +986,25 @@ pero el listado consultaba todos los periodos y podía incluir grupos histórico
 - ESLint acotado se intentó con límites de 30 y 60 segundos; ambos expiraron sin
   resultado. `git diff --check` pasó sin errores.
 - Sin llamadas reales, cambios de datos ni validación visual en navegador.
+
+## FE-025 — Mostrar matriculados antes de la capacidad del grupo
+
+### Bug y error original
+
+Un grupo con 8 estudiantes y 30 cupos aparecía como `30 / 8 estudiantes`.
+
+### Dónde se encontraba
+
+- `src/app/(app)/docente/grupos/page.tsx`, indicador de estudiantes de cada
+  tarjeta: mostraba `capacity / enrolled`.
+
+### Dónde y cómo se solucionó
+
+- Se conserva el arreglo local previo que invierte el indicador a
+  `enrolled / capacity`, coincidiendo con el detalle del grupo.
+
+### Validación
+
+- Desde la raíz: `node --test tests/teacher-group-capacity.test.mjs`.
+- Datos y API simulados para 0, 8 y 30 matrículas con capacidad 30.
+- Sin validación visual ni consultas a grupos reales.

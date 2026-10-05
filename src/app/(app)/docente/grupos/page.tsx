@@ -49,7 +49,7 @@ export default async function MyGroupsPage({ searchParams }: PageProps<"/docente
                   <div className="mt-4 flex flex-wrap items-center gap-2">
                     <Badge tone="primary">
                       <Users className="mr-1 size-3" aria-hidden />
-                      {g.capacity} / {g.enrolled} estudiantes
+                      {g.enrolled} / {g.capacity} estudiantes
                     </Badge>
                     {g.period.status === "cerrado" && <Badge tone="neutral">Periodo cerrado</Badge>}
                     {!g.active && <Badge tone="warning">Inactivo</Badge>}
