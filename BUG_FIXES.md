@@ -506,3 +506,40 @@ tarjeta del lunes, tanto con clases como sin ellas.
 - Se renderizan el componente `WeekSchedule` y el diccionario reales con React;
   solo se simulan el contenedor Card y la combinación de clases CSS.
 - Sin llamadas API ni cambios de horarios reales; sin validación en navegador.
+
+## FE-006 — Limpiar prerrequisitos al cambiar el programa
+
+### Bug y error original
+
+En Nueva materia, seleccionar un programa A y uno de sus prerrequisitos y
+cambiar después al programa B ocultaba la selección anterior, pero conservaba
+su ID en el cuerpo enviado. El usuario no podía quitar la casilla invisible.
+
+### Dónde se encontraba
+
+- `src/components/admin/resource-manager.tsx`, componente `RecordForm`, función
+  `set`: actualizaba solo el campo elegido. El efecto de opciones dinámicas
+  recargaba las materias, pero no limpiaba `values.prerequisites`.
+- `src/components/admin/configs.tsx`, configuración `subjects`: las opciones
+  dependen del programa y `toBody` transmite todos los IDs seleccionados.
+
+### Dónde y cómo se solucionó
+
+- En `RecordForm.set` se detectan los multiselects cuyo endpoint de opciones
+  cambia con el nuevo valor. Se vacían sus selecciones y sus opciones visibles
+  inmediatamente, antes de la recarga, para evitar conservar o volver a elegir
+  prerrequisitos del programa anterior.
+- No se limpia al abrir una edición, cambiar campos no relacionados o volver
+  a seleccionar el mismo programa. Los prerrequisitos válidos existentes se
+  conservan. La política al cambiar de programa es reiniciar la selección.
+
+### Validación
+
+- `tests/resource-prerequisites.test.mjs` ejecuta `set`, la carga de opciones y
+  la configuración real de materias con estado y API simulados. Tres casos
+  fallaron antes; las cinco pruebas pasan después: cambio A → B, edición
+  inicial, campos no relacionados/mismo programa, vaciado y regreso a A.
+- Desde la raíz: `node --test tests/resource-prerequisites.test.mjs tests/resource-form-dirty.test.mjs tests/resource-form-validation.test.mjs tests/resource-pagination.test.mjs`:
+  dieciocho pruebas aprobadas, incluidas las regresiones del formulario.
+- `node node_modules/typescript/bin/tsc --noEmit --incremental false`: correcto.
+- No se crearon materias ni se realizó validación visual en navegador.

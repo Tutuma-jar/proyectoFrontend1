@@ -301,7 +301,22 @@ function RecordForm({
   const [saving, setSaving] = useState(false);
 
   const fields = config.fields.filter((f) => !f.mode || f.mode === mode);
-  const set = (name: string, value: Value) => setValues((v) => ({ ...v, [name]: value }));
+  const set = (name: string, value: Value) => {
+    const nextValues = { ...values, [name]: value };
+    const reset = fields.filter((f) => f.type === "multiselect" && f.optionsFrom && f.optionsFrom.endpoint(values) !== f.optionsFrom.endpoint(nextValues));
+    setValues((v) => {
+      const next = { ...v, [name]: value };
+      reset.forEach((f) => { next[f.name] = []; });
+      return next;
+    });
+    if (reset.length) {
+      setDynamic((d) => {
+        const next = { ...d };
+        reset.forEach((f) => { next[f.name] = []; });
+        return next;
+      });
+    }
+  };
 
   // Opciones que dependen de otros campos (p. ej. prerrequisitos segun el programa elegido)
   const endpoints = fields.map((f) => (f.optionsFrom ? f.optionsFrom.endpoint(values) : null)).join("|");
