@@ -6,7 +6,7 @@ import { COOKIE, decodeToken } from "@/lib/session";
 // Asi el navegador nunca ve el token y no hace falta CORS en el backend.
 async function forward(request: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
   const { path } = await ctx.params;
-  const target = `${BACKEND_URL}/api/${path.join("/")}${request.nextUrl.search}`;
+  const target = `${BACKEND_URL}/api/v1/${path.join("/")}${request.nextUrl.search}`;
   const token = request.cookies.get(COOKIE)?.value;
   const hasBody = !["GET", "HEAD"].includes(request.method);
 

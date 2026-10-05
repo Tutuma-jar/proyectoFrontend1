@@ -32,7 +32,7 @@ export async function apiGet<T>(path: string): Promise<T> {
   const token = jar.get(COOKIE)?.value;
   let res: Response;
   try {
-    res = await fetch(`${BACKEND_URL}/api${path}`, {
+    res = await fetch(`${BACKEND_URL}/api/v1${path}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       cache: "no-store",
     });
