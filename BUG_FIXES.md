@@ -277,3 +277,34 @@ selección y el total dejaba de corresponder al conjunto filtrado.
 - `node node_modules/typescript/bin/tsc --noEmit --incremental false`: correcto.
 - Comandos desde la raíz de `proyectoFrontend1`, con API simulada y sin
   escrituras reales. No se realizó validación visual en navegador.
+
+## FE-013 — Mostrar 3.0 como nota parcial aprobatoria
+
+### Bug y error original
+
+En `/estudiante/notas`, una evaluación con nota exactamente 3.0 aparecía con
+color de peligro, aunque la página indica aprobación desde 3.0 y la nota final
+con ese valor sí se mostraba con color de éxito.
+
+### Dónde se encontraba
+
+- `src/app/(app)/estudiante/notas/page.tsx`, función `GradesPage`, línea 73:
+  el estilo de notas parciales usaba `value <= PASSING`, incluyendo el umbral
+  aprobatorio en el color de peligro. La nota final ya utilizaba `< PASSING`.
+
+### Dónde y cómo se solucionó
+
+- En la misma condición se cambió `<=` por `<`, unificando el criterio de
+  parciales y finales. Se compara el valor numérico original, sin redondearlo.
+- Se conserva el estilo neutro y el texto de las evaluaciones pendientes.
+- Se añadió `tests/student-grade-passing.test.mjs` como prueba de regresión.
+
+### Validación
+
+- Desde la raíz: `node --test tests/student-grade-passing.test.mjs`.
+- La página real transpilada se renderiza con React, API sintética y contenedores
+  visuales simulados. El caso 3.0 falló antes; después pasan las cinco pruebas:
+  notas 0, 2.99, 3.0 y 3.01 con tonos coherentes en parciales y finales, y pendientes.
+- `node --test tests/student-grade-passing.test.mjs tests/student-grade-accumulated.test.mjs`:
+  pasan doce pruebas, incluidas las siete de FE-012 que sigue pendiente de commit.
+- Sin escrituras reales ni validación visual en navegador.
