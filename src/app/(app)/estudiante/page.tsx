@@ -22,7 +22,7 @@ export default async function StudentHome() {
 
   return (
     <>
-      <PageHeader title={`Hola, ${me.name.split(" ")[1]}`} subtitle="Este es el resumen de tu periodo académico." />
+      <PageHeader title={`Hola, ${me.name.trim().split(/\s+/)[0] || "estudiante"}`} subtitle="Este es el resumen de tu periodo académico." />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard

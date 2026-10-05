@@ -811,3 +811,34 @@ el dashboard devolviera conteos positivos de matrículas.
   Pasan nueve pruebas, incluidas las tres regresiones de FE-027.
 - `git diff --check`: sin errores.
 - Sin peticiones reales, cambios de datos ni validación en navegador.
+
+## FE-030 — Saludo seguro para nombres de una sola palabra
+
+### Bug y error original
+
+El inicio del estudiante mostraba `Hola, undefined` con un nombre como `Ana`.
+Con nombres de varias palabras usaba la segunda palabra en lugar de la primera.
+
+### Dónde se encontraba
+
+- `src/app/(app)/estudiante/page.tsx`, componente `StudentHome`, título de
+  `PageHeader`: interpolaba `me.name.split(" ")[1]` sin comprobar que existiera.
+
+### Dónde y cómo se solucionó
+
+- El saludo usa `me.name.trim().split(/\s+/)[0] || "estudiante"`: toma la
+  primera palabra, normaliza espacios y ofrece un fallback para nombres vacíos.
+- La corrección y `tests/student-home-greeting.test.mjs` ya estaban presentes
+  como cambios locales al iniciar esta revisión; se validaron sin reescribirlos.
+  El resto del resumen del estudiante se mantiene intacto.
+
+### Validación
+
+- Desde la raíz: `node --test tests/student-home-greeting.test.mjs`:
+  seis pruebas aprobadas para `Ana`, `Ana Ruiz`, espacios adicionales,
+  tabulaciones/saltos de línea, nombre vacío y solo espacios. Ningún saludo
+  contiene `undefined`.
+- Se renderiza la página real con React y API/componentes visuales simulados.
+- `node node_modules/typescript/bin/tsc --noEmit --incremental false` no terminó
+  dentro del timeout de 60 segundos; no se afirma que el typecheck haya pasado.
+- Sin llamadas a cuentas reales ni validación visual en navegador.
