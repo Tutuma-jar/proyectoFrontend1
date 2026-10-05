@@ -54,7 +54,7 @@ export function GradeSheetPanel({ groupId, readOnly }: { groupId: string; readOn
       for (const ev of sheet.evaluations) {
         const k = key(row.enrollment, ev.id);
         const text = drafts[k];
-        if (text === undefined || text.trim() === "") continue;
+        if (text === undefined || (text.trim() === "" && row.grades[ev.id] === null)) continue;
         const value = parse(text);
         if (value !== null && value === row.grades[ev.id]) continue;
         list.push({ enrollment: row.enrollment, evaluation: ev.id, text, value, k });
@@ -166,7 +166,7 @@ export function GradeSheetPanel({ groupId, readOnly }: { groupId: string; readOn
                       const k = key(row.enrollment, ev.id);
                       const saved = row.grades[ev.id];
                       const draft = drafts[k];
-                      const bad = draft !== undefined && draft.trim() !== "" && parse(draft) === null;
+                      const bad = invalid.some((c) => c.k === k);
                       return (
                         <td key={ev.id} className="border-b border-line/60 px-2 py-2 text-center">
                           {editable ? (

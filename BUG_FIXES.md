@@ -879,3 +879,43 @@ No habían sido enviadas, pero se descartaban junto con las notas guardadas.
   ediciones nuevas y limpieza de un éxito completo sin ediciones nuevas.
 - Typecheck sin emisión y ESLint del componente y la prueba pasaron.
 - No se registraron notas reales ni se realizó validación visual en navegador.
+
+## FE-008 — Reconocer el vaciado de una nota guardada como cambio inválido
+
+### Bug y error original
+
+Vaciar una nota guardada mostraba una celda en blanco, pero no generaba un
+cambio pendiente. La interfaz podía permitir finalizar usando la nota
+persistida aunque lo visible indicara otra cosa.
+
+### Dónde se encontraba
+
+- `src/app/(app)/docente/grupos/[id]/grade-sheet-panel.tsx`: el cálculo de
+  `changes` ignoraba todos los borradores vacíos o con solo espacios.
+- La condición `bad` tampoco marcaba esos vacíos como inválidos.
+- El botón `Confirmar` no comprobaba cambios pendientes aparecidos después
+  de abrir la confirmación de finalización.
+
+### Dónde y cómo se solucionó
+
+- Solo se ignora un borrador vacío cuando la nota guardada ya es `null`.
+  Vaciar una nota numérica, incluido cero, cuenta como cambio con valor inválido.
+- El indicador de invalidez usa la lista `invalid`, de modo que la celda y
+  los botones comparten la misma validación. Guardar y Finalizar quedan
+  bloqueados; Confirmar también se deshabilita si hay cambios pendientes.
+- Restaurar el valor guardado elimina el pendiente. No se envía `null` ni
+  se agrega una operación de borrado: el DTO del backend exige un número.
+- Se conserva el arreglo previo de FE-017, que mantiene un vaciado realizado
+  durante el guardado de otra celda.
+
+### Validación
+
+- `tests/grade-sheet-empty.test.mjs` ejecuta el componente real con hooks,
+  JSX y API simulados. Cubre vacío, espacios, restauración, una nota ya ausente,
+  cero, confirmación abierta y vaciado durante otro guardado.
+- Desde la raíz: `node --test tests/grade-sheet-empty.test.mjs tests/grade-sheet-save.test.mjs`.
+- Cinco casos de FE-008 fallaban antes del arreglo; después pasan los siete
+  casos y las cinco regresiones de FE-017.
+- Typecheck sin emisión y ESLint del componente y la nueva prueba pasaron.
+- Sin escrituras de notas reales ni solicitudes de finalización; no se hizo
+  validación visual en navegador.
