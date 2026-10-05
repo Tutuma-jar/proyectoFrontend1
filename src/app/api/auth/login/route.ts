@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { BACKEND_URL } from "@/lib/server";
+import { BACKEND_API_URL } from "@/lib/server";
 import { COOKIE, HOME, decodeToken } from "@/lib/session";
 
 // Inicia sesion: pide el token al backend y lo guarda en una cookie httpOnly
 export async function POST(request: NextRequest) {
   let res: Response;
   try {
-    res = await fetch(`${BACKEND_URL}/api/auth/login`, {
+    res = await fetch(`${BACKEND_API_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: await request.text(),

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { BACKEND_URL } from "@/lib/server";
+import { BACKEND_API_URL } from "@/lib/server";
 import { COOKIE, decodeToken } from "@/lib/session";
 
 // Reenvia cualquier /api/... al backend agregando el token de la cookie.
 // Asi el navegador nunca ve el token y no hace falta CORS en el backend.
 async function forward(request: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
   const { path } = await ctx.params;
-  const target = `${BACKEND_URL}/api/${path.join("/")}${request.nextUrl.search}`;
+  const target = `${BACKEND_API_URL}/${path.join("/")}${request.nextUrl.search}`;
   const token = request.cookies.get(COOKIE)?.value;
   const hasBody = !["GET", "HEAD"].includes(request.method);
 
