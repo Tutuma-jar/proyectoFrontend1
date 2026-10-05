@@ -88,6 +88,7 @@ export function GradeSheetPanel({ groupId, readOnly }: { groupId: string; readOn
   }
 
   async function finalize() {
+    if (readOnly || saving || finalizing || changes.length > 0 || !sheet?.summary.planComplete || sheet.summary.readyToFinalize === 0) return;
     setFinalizing(true);
     setNotice(null);
     try {
@@ -223,7 +224,7 @@ export function GradeSheetPanel({ groupId, readOnly }: { groupId: string; readOn
               <span className="text-sm font-semibold">
                 Se calculará la nota final de {ready} {ready === 1 ? "estudiante" : "estudiantes"}. No se puede deshacer.
               </span>
-              <Button loading={finalizing} onClick={finalize}>
+              <Button loading={finalizing} onClick={finalize} disabled={ready === 0 || unsaved || !sheet.summary.planComplete || saving}>
                 Confirmar
               </Button>
               <Button variant="ghost" onClick={() => setConfirming(false)} disabled={finalizing}>

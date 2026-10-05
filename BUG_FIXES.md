@@ -4,6 +4,40 @@ Este documento registra las correcciones realizadas. Para cada nuevo arreglo,
 agregar una entrada con el ID del bug, el error original, su ubicación, la
 solución y su validación. No reemplazar las entradas anteriores.
 
+## FE-018 — Revalidar las condiciones al confirmar la finalización
+
+### Bug y error original
+
+Después de abrir la confirmación, editar una nota podía iniciar la finalización
+con valores persistidos diferentes de los visibles. Las precondiciones solo
+se comprobaban al abrir la confirmación, no en el handler de finalización.
+
+### Dónde se encontraba
+
+- `src/app/(app)/docente/grupos/[id]/grade-sheet-panel.tsx`, función `finalize`:
+  enviaba el POST sin revalidar pendientes, plan completo o estudiantes listos.
+- El botón `Confirmar` no revalidaba todas esas condiciones. El arreglo local
+  de FE-008 ya bloqueaba pendientes en ese botón, pero no protegía el handler.
+
+### Dónde y cómo se solucionó
+
+- `finalize` retorna sin enviar solicitudes si hay cambios pendientes, falta
+  un plan completo o no hay estudiantes listos. También rechaza una planilla
+  ausente, modo de solo lectura o un guardado/finalización en curso.
+- `Confirmar` comprueba pendientes, plan completo, estudiantes listos y
+  guardado en curso; conserva su bloqueo por `loading` durante la finalización.
+- Una confirmación válida conserva el POST, su resultado y la recarga existente.
+
+### Validación
+
+- `tests/grade-sheet-finalize.test.mjs` ejecuta el handler y la condición del
+  botón extraídos del componente real con API y estado simulados.
+- Desde la raíz: `node --test tests/grade-sheet-finalize.test.mjs tests/grade-sheet-empty.test.mjs tests/grade-sheet-save.test.mjs`.
+- Ocho casos de FE-018 fallaban antes del cambio; después pasan sus nueve
+  pruebas y las doce regresiones locales de FE-008 y FE-017.
+- Typecheck sin emisión y ESLint focalizado pasaron.
+- No se finalizaron grupos reales ni se realizó validación visual en navegador.
+
 ## FE-001 — Restablecer el contrato de rutas con el backend
 
 ### Bug y error original
