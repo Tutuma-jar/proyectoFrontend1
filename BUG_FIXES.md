@@ -1008,3 +1008,28 @@ Un grupo con 8 estudiantes y 30 cupos aparecía como `30 / 8 estudiantes`.
 - Desde la raíz: `node --test tests/teacher-group-capacity.test.mjs`.
 - Datos y API simulados para 0, 8 y 30 matrículas con capacidad 30.
 - Sin validación visual ni consultas a grupos reales.
+
+## FE-031 — Restaurar el contraste del menú lateral
+
+### Bug y error original
+
+Los enlaces inactivos, sus íconos y los encabezados quedaban blancos sobre
+el fondo blanco; los enlaces solo eran visibles al pasar el mouse.
+
+### Dónde se encontraba
+
+- `src/components/app-shell.tsx`: `renderLink` asignaba `text-white` a enlaces
+  inactivos y los títulos de sección y Cuenta también usaban `text-white`.
+
+### Dónde y cómo se solucionó
+
+- Se conserva el arreglo local previo: enlaces inactivos con `text-ink` y
+  títulos con `text-muted`. El enlace activo mantiene blanco sobre violeta.
+- Los íconos heredan el color del enlace y escritorio/móvil comparten el menú.
+- No se modifican rutas ni permisos.
+
+### Validación
+
+- Comprobación estática del componente y la paleta: enlaces 17.33:1,
+  encabezados 5.51:1, activo 6.02:1 y hover 15.70:1; superan 4.5:1.
+- ESLint del componente pasó. Sin validación visual en navegador.
