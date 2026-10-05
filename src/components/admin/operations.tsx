@@ -343,7 +343,7 @@ const enrollments: ResourceConfig = {
         title="Cancelar matrícula"
         description={`Se cancelará la matrícula de ${r.student?.user?.name} en ${r.subject?.name} y se liberará el cupo.`}
         confirmLabel="Cancelar matrícula"
-        run={() => api(`/enrollments/${r._id}/cancel`, { method: "PATCH" })}
+        run={() => api(`/enrollments/${r._id}/cancel`, { method: "POST" })}
         onDone={reload}
       />
     ) : null,

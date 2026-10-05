@@ -174,3 +174,38 @@ campos no declarados, por lo que ambos cuerpos incumplían el contrato.
   POST `/api/enrollments`, los IDs completos y la ausencia de `group`.
 - `git diff --check` pasó sin errores.
 - No se realizaron matrículas reales ni pruebas integradas contra el backend.
+
+## FE-022 — Usar POST para cancelar matrículas
+
+### Bug y error original
+
+La cancelación desde estudiante y administración enviaba `PATCH` a
+`/enrollments/:id/cancel`, pero el controller del backend registra `POST`.
+El proxy conserva el método, por lo que la petición no encontraba la operación.
+
+### Dónde se encontraba
+
+- `src/app/(app)/estudiante/materias/cancel-button.tsx`, función `cancel`:
+  la llamada a la API utilizaba `method: "PATCH"`.
+- `src/components/admin/operations.tsx`, acción `enrollments.rowActions`:
+  el callback `run` de la confirmación administrativa también usaba `PATCH`.
+
+### Dónde y cómo se solucionó
+
+- Se cambió únicamente el método de ambas llamadas a `POST`, de acuerdo con
+  `@Post(':id/cancel')` en el backend.
+- Se mantienen la ruta, el ID completo, la confirmación y el manejo de errores.
+  No se modifican el proxy, el backend ni otros endpoints de edición.
+
+### Validación
+
+- `tests/enrollment-cancel.test.mjs` ejecuta las funciones reales de cancelación,
+  confirmación y cliente API con HTTP simulado. Comprueba POST y el ID completo,
+  cierre de la confirmación y recarga administrativa ante 200, y conservación
+  de la confirmación con mensaje de error ante 403.
+- Desde la raíz: `node --test tests/enrollment-cancel.test.mjs`. Los cuatro
+  casos fallaron antes del cambio por enviar PATCH y pasaron después.
+- `node --test tests/enrollment-cancel.test.mjs tests/enrollment-payload.test.mjs`:
+  seis pruebas pasan, incluida la regresión de creación de matrículas FE-021.
+- `git diff --check`: sin errores.
+- No se cancelaron matrículas reales ni se probó contra un backend en ejecución.

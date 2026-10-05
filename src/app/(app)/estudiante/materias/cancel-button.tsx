@@ -14,7 +14,7 @@ export function CancelButton({ id, name }: { id: string; name: string }) {
     setLoading(true);
     setError(null);
     try {
-      await api(`/enrollments/${id}/cancel`, { method: "PATCH" });
+      await api(`/enrollments/${id}/cancel`, { method: "POST" });
       setConfirming(false);
       setLoading(false);
     } catch (e) {
