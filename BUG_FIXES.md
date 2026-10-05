@@ -476,3 +476,33 @@ mostraba Sin clases. Afectaba a los horarios de estudiante y docente.
   Las cuatro pruebas fallaron antes del cambio y pasaron después.
 - `git diff --check`: sin errores.
 - No se crearon grupos ni se comprobó la interfaz en un navegador.
+
+## FE-015 — Restaurar el encabezado Lunes en los horarios
+
+### Bug y error original
+
+Los horarios semanales de estudiante y docente mostraban "Lrrrrunes" en la
+tarjeta del lunes, tanto con clases como sin ellas.
+
+### Dónde se encontraba
+
+- `src/lib/format.ts`, constante `DAY_LABEL`, línea 6: la clave `lunes` tenía
+  asignado el texto corrupto "Lrrrrunes".
+- `src/components/week-schedule.tsx` imprime directamente `DAY_LABEL[day]`
+  como encabezado de cada tarjeta.
+
+### Dónde y cómo se solucionó
+
+- Se sustituyó únicamente la etiqueta por "Lunes" en `src/lib/format.ts`.
+- Se conservaron la clave `lunes`, los demás encabezados y los contratos del
+  horario. No fue necesario modificar el componente compartido ni su agrupación.
+- Se añadió `tests/week-schedule-labels.test.mjs` como regresión focalizada.
+
+### Validación
+
+- Desde la raíz: `node --test tests/week-schedule-labels.test.mjs`.
+- Las tres pruebas fallaron antes y pasan después: claves y etiquetas del
+  diccionario, seis encabezados con listas vacías y encabezados con clases cargadas.
+- Se renderizan el componente `WeekSchedule` y el diccionario reales con React;
+  solo se simulan el contenedor Card y la combinación de clases CSS.
+- Sin llamadas API ni cambios de horarios reales; sin validación en navegador.
