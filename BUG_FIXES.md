@@ -919,3 +919,35 @@ persistida aunque lo visible indicara otra cosa.
 - Typecheck sin emisión y ESLint del componente y la nueva prueba pasaron.
 - Sin escrituras de notas reales ni solicitudes de finalización; no se hizo
   validación visual en navegador.
+
+## FE-012 — Ponderar el acumulado de notas del estudiante
+
+### Bug y error original
+
+En `/estudiante/notas`, el acumulado mostraba la media aritmética de las notas
+registradas, ignorando sus pesos. Una nota 5 al 20% y una nota 1 al 80%
+mostraban 3.00 en vez de 1.80 cuando aún no había nota final publicada.
+
+### Dónde se encontraba
+
+- `src/app/(app)/estudiante/notas/page.tsx`, función `GradesPage`, línea 40:
+  `points` sumaba las notas y dividía por `graded.length`.
+
+### Dónde y cómo se solucionó
+
+- En la misma línea se calcula la suma de `nota * (peso / 100)`, consistente
+  con el acumulado de la planilla académica; no se divide por el peso evaluado.
+- Las evaluaciones pendientes no aportan puntos. Una nota cero sí cuenta como
+  evaluada. Se mantienen el porcentaje evaluado, el guion sin notas y la
+  prioridad de la nota final publicada.
+- Se añadió `tests/student-grade-accumulated.test.mjs` como regresión focalizada.
+
+### Validación
+
+- Desde la raíz: `node --test tests/student-grade-accumulated.test.mjs`.
+- La página real transpilada se renderiza con React y respuestas API sintéticas;
+  los contenedores visuales se simulan. Antes fallaban tres casos; después pasan
+  las siete pruebas: pesos diferentes, pesos iguales, nota cero, pendientes,
+  todas pendientes, solo cero registrado y nota final publicada.
+- `git diff --check` sin errores. Sin modificar notas reales ni finalizar
+  matrículas; sin validación visual en navegador ni integración con el backend.
