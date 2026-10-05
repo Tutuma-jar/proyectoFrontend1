@@ -12,7 +12,9 @@ const { outputText } = ts.transpileModule(readFileSync(new URL(
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2017, jsx: ts.JsxEmit.ReactJSX },
 });
 
-function notifications(count) {
+class TestApiError extends Error {}
+
+function notifications(count, { mutationError, failures = 0 } = {}) {
   const records = Array.from({ length: count }, (_, index) => ({
     _id: `notification-${index}`, type: "aviso", title: `Notice ${index}`, message: "Test",
     createdAt: "2026-01-01T12:00:00Z", read: false,
@@ -50,10 +52,14 @@ function notifications(count) {
       },
     },
     "lucide-react": Object.fromEntries(["Award", "BookCheck", "BookX", "CheckCheck", "Megaphone", "Presentation"].map((name) => [name, name])),
-    "@/lib/api": { ApiError: Error, api: async (path, options) => {
+    "@/lib/api": { ApiError: TestApiError, api: async (path, options) => {
       calls.push({ path, options });
       if (options) {
         assert.equal(options.method, "PATCH");
+        if (failures > 0) {
+          failures -= 1;
+          throw mutationError;
+        }
         if (path === "/notifications/read-all") records.forEach((record) => { record.read = true; });
         else {
           const record = records.find((item) => path === `/notifications/${item._id}/read`);
@@ -145,4 +151,36 @@ test("FE-019: marking all read from page 2 resets to page 1 with an empty result
   assert.equal(view.state[0], 1);
   assert.equal(view.state[2].meta.total, 0);
   assert.equal(view.state[2].unread, 0);
+});
+
+for (const action of ["Marcar leída", "Marcar todas"]) {
+  for (const message of ["No se pudo actualizar la notificación", "No hay conexion con el servidor"]) {
+    test(`FE-020: ${action} shows ${message}, survives a successful GET and permits retry`, async () => {
+      const view = notifications(2, { failures: 1, mutationError: new TestApiError(message) });
+      await view.flush();
+      await view.button(action).onClick();
+      let nodes = await view.flush();
+      assert.equal(nodes.find((node) => node.type === "Alert")?.props.children, message);
+      assert.equal(view.state[2].unread, 2);
+      assert.equal(view.state[2].data.every((notification) => !notification.read), true);
+      assert.equal(view.calls.filter((call) => !call.options).length, 1, "A failed mutation must not trigger a success reload");
+      view.button("Todas").onClick();
+      nodes = await view.flush();
+      assert.equal(view.calls.filter((call) => !call.options).length, 2);
+      assert.equal(nodes.find((node) => node.type === "Alert")?.props.children, message);
+      await view.button(action).onClick();
+      nodes = await view.flush();
+      assert.equal(nodes.some((node) => node.type === "Alert"), false);
+      assert.equal(view.state[2].unread, action === "Marcar todas" ? 0 : 1);
+      assert.equal(view.calls.filter((call) => call.options).length, 2);
+    });
+  }
+}
+
+test("FE-020: an unexpected rejection displays a safe fallback", async () => {
+  const view = notifications(1, { failures: 1, mutationError: new Error("Internal details") });
+  await view.flush();
+  await view.button("Marcar leída").onClick();
+  const nodes = await view.flush();
+  assert.equal(nodes.find((node) => node.type === "Alert")?.props.children, "No se pudo marcar la notificación como leída");
 });

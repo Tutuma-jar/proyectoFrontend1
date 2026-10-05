@@ -4,6 +4,41 @@ Este documento registra las correcciones realizadas. Para cada nuevo arreglo,
 agregar una entrada con el ID del bug, el error original, su ubicación, la
 solución y su validación. No reemplazar las entradas anteriores.
 
+## FE-020 — Mostrar errores al marcar notificaciones como leídas
+
+### Bug y error original
+
+Si fallaba Marcar leída o Marcar todas como leídas, se absorbía el rechazo
+y se recargaba la lista sin explicar por qué las notificaciones seguían sin leer.
+
+### Dónde se encontraba
+
+- `src/app/(app)/notificaciones/notification-list.tsx`, funciones `markRead`
+  y `markAll`: ambas usaban `.catch(() => undefined)` y recargaban siempre.
+- `load` limpiaba el error de lectura al funcionar, sin un estado independiente
+  para conservar y mostrar el error de la acción.
+
+### Dónde y cómo se solucionó
+
+- Se agregó `actionError` y un aviso visible sin reemplazar la lista ni sus
+  botones, para permitir reintentar.
+- Cada handler limpia el aviso al iniciar, captura el rechazo y muestra el
+  mensaje de `ApiError` o un mensaje genérico seguro para errores inesperados.
+- Solo se recarga después de una mutación exitosa. Una lectura posterior
+  exitosa no borra el error de la acción; un reintento exitoso sí lo limpia.
+
+### Validación
+
+- Desde la raíz: `node --test tests/notification-pagination.test.mjs`.
+- Cinco casos nuevos fallaban antes del arreglo; después pasan los ocho casos,
+  incluyendo las tres regresiones de paginación de FE-019.
+- Se comprueban errores de servidor/conexión para ambas acciones, persistencia
+  del aviso tras un GET exitoso, reintento y actualización del contador, además
+  de un mensaje genérico ante un rechazo inesperado.
+- Typecheck sin emisión y ESLint focalizado pasaron.
+- Componente, hooks y API simulados; sin modificar notificaciones reales ni
+  validación visual en navegador.
+
 ## FE-019 — Recuperar una página válida al reducirse las notificaciones
 
 ### Bug y error original

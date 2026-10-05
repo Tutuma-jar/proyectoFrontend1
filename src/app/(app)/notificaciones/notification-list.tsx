@@ -29,6 +29,7 @@ export function NotificationList() {
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [result, setResult] = useState<Page | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -52,13 +53,23 @@ export function NotificationList() {
   }, [load]);
 
   async function markRead(id: string) {
-    await api(`/notifications/${id}/read`, { method: "PATCH" }).catch(() => undefined);
-    void load();
+    setActionError(null);
+    try {
+      await api(`/notifications/${id}/read`, { method: "PATCH" });
+      void load();
+    } catch (e) {
+      setActionError(e instanceof ApiError ? e.message : "No se pudo marcar la notificación como leída");
+    }
   }
 
   async function markAll() {
-    await api("/notifications/read-all", { method: "PATCH" }).catch(() => undefined);
-    void load();
+    setActionError(null);
+    try {
+      await api("/notifications/read-all", { method: "PATCH" });
+      void load();
+    } catch (e) {
+      setActionError(e instanceof ApiError ? e.message : "No se pudieron marcar las notificaciones como leídas");
+    }
   }
 
   if (error) return <Alert>{error}</Alert>;
@@ -92,6 +103,8 @@ export function NotificationList() {
           <CheckCheck className="size-4" aria-hidden /> Marcar todas como leídas
         </Button>
       </div>
+
+      {actionError && <div className="mb-4"><Alert>{actionError}</Alert></div>}
 
       {result.data.length === 0 ? (
         <EmptyState title={unreadOnly ? "No tienes notificaciones sin leer" : "Aún no tienes notificaciones"} />
