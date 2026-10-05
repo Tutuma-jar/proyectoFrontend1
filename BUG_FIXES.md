@@ -842,3 +842,40 @@ Con nombres de varias palabras usaba la segunda palabra en lugar de la primera.
 - `node node_modules/typescript/bin/tsc --noEmit --incremental false` no terminó
   dentro del timeout de 60 segundos; no se afirma que el typecheck haya pasado.
 - Sin llamadas a cuentas reales ni validación visual en navegador.
+
+## FE-017 — Conservar ediciones realizadas durante el guardado de notas
+
+### Bug y error original
+
+Si el docente editaba otra celda o cambiaba nuevamente una nota mientras un
+guardado estaba pendiente, esas ediciones desaparecían al recibir la respuesta.
+No habían sido enviadas, pero se descartaban junto con las notas guardadas.
+
+### Dónde se encontraba
+
+- `src/app/(app)/docente/grupos/[id]/grade-sheet-panel.tsx`, función `save`:
+  los elementos enviados se construían con la instantánea de `changes`, pero
+  la limpieza posterior filtraba todos los borradores actuales usando solo
+  las claves fallidas de aquella solicitud. Un éxito completo borraba todos.
+- Los inputs permanecían editables durante el guardado.
+
+### Dónde y cómo se solucionó
+
+- En la misma función se construye `savedDrafts`, un mapa de claves y textos
+  enviados con éxito, excluyendo los índices fallidos de la respuesta.
+- El actualizador funcional de `setDrafts` elimina una entrada únicamente
+  cuando su texto actual coincide con el enviado y guardado.
+- Se conservan las celdas nuevas, los valores modificados durante la espera
+  y las notas fallidas. La tabla sigue permitiendo editar mientras guarda.
+
+### Validación
+
+- `tests/grade-sheet-save.test.mjs` ejecuta la función `save` extraída del
+  componente real, con estado y API simulados y una respuesta demorada.
+- Comando desde la raíz: `node --test tests/grade-sheet-save.test.mjs`.
+- Antes del arreglo fallaban los tres casos de pérdida de ediciones; después
+  pasan las cinco pruebas: celda nueva, valor posterior en una celda enviada,
+  éxito parcial conservando ediciones, limpieza de éxitos parciales sin
+  ediciones nuevas y limpieza de un éxito completo sin ediciones nuevas.
+- Typecheck sin emisión y ESLint del componente y la prueba pasaron.
+- No se registraron notas reales ni se realizó validación visual en navegador.

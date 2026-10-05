@@ -73,7 +73,9 @@ export function GradeSheetPanel({ groupId, readOnly }: { groupId: string; readOn
       const items = changes.map((c) => ({ enrollment: c.enrollment, evaluation: c.evaluation, value: c.value as number }));
       const r = await api<BulkResult>("/grades/bulk", { method: "PUT", body: { items } });
       const failedKeys = new Set(r.failed.map((f) => changes[f.index].k));
-      setDrafts((d) => Object.fromEntries(Object.entries(d).filter(([k]) => failedKeys.has(k))));
+      const savedDrafts = new Map(changes.filter((c) => !failedKeys.has(c.k)).map((c) => [c.k, c.text]));
+      // Conserva las ediciones posteriores al envio y las notas que no se guardaron.
+      setDrafts((d) => Object.fromEntries(Object.entries(d).filter(([k, text]) => savedDrafts.get(k) !== text)));
       setNotice(
         r.failed.length === 0
           ? { tone: "success", text: `${r.saved} ${r.saved === 1 ? "nota guardada" : "notas guardadas"}.` }
